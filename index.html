@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trustee Wallet - Premium Edition</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* --- SYSTÈME DE VARIABLES D'INTERFACE (THEMING) --- */
+        :root {
+            --bg-body: #06070a;
+            --bg-shell: linear-gradient(185deg, #0d0f17 0%, #111420 50%, #161926 100%);
+            --bg-card-blank: rgba(22, 26, 41, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-muted: #848da4;
+            --nav-bg: rgba(13, 15, 24, 0.85);
+            --input-bg: #171b2b;
+            --shadow: rgba(0, 0, 0, 0.6);
+            --accent-green: #2ecc71;
+            --accent-red: #ea2027;
+        }
+
+        [data-theme="light"] {
+            --bg-body: #f0f2f5;
+            --bg-shell: linear-gradient(185deg, #ffffff 0%, #f4f6f9 60%, #ebedf2 100%);
+            --bg-card-blank: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --text-main: #1c1e24;
+            --text-muted: #6b7385;
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --input-bg: #f5f6fa;
+            --shadow: rgba(14, 21, 47, 0.06);
+            --accent-green: #10ac84;
+            --accent-red: #ee5253;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+            transition: background 0.3s cubic-bezier(0.25, 1, 0.5, 1), color 0.2s, border-color 0.2s;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            padding: 10px;
+        }
+
+        /* Boîtier Téléphone (Format iPhone X exact) */
+        .phone-shell {
+            width: 385px;
+            height: 835px;
+            background: var(--bg-shell);
+            border-radius: 44px;
+            padding: 26px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 30px 70px var(--shadow), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+            border: 7px solid #282c3d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- BANNIÈRE DE NOTIFICATION IN-APP (STYLE iOS PUSH) --- */
+        .push-notification {
+            position: absolute;
+            top: -100px;
+            left: 12px;
+            right: 12px;
+            background: rgba(20, 24, 39, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            padding: 14px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .push-notification.show {
+            top: 20px;
+        }
+        .push-icon-box {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #0984e3, #2f3542);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .push-content {
+            flex: 1;
+        }
+        .push-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #848da4;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .push-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+        }
+        .push-desc {
+            font-size: 12px;
+            color: #b0b7c6;
+            margin-top: 1px;
+        }
+
+        /* --- EN-TÊTE PROFIL --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .profile { display: flex; align-items: center; gap: 12px; }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff9f43, #ff5252);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(255, 82, 82, 0.2);
+        }
+
+        .username { font-weight: 800; font-size: 16px; letter-spacing: -0.3px; }
+        .user-tag { font-size: 11px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+        .theme-toggle-btn {
+            background: var(--bg-card-blank);
+            border: 1px solid var(--border-color);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        /* --- COMPOSANT DE SOLDE GLOBAL --- */
+        .balance-container { text-align: center; margin-bottom: 18px; }
+        .balance-label { color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+        .main-balance { font-size: 36px; font-weight: 800; letter-spacing: -0.8px; }
+        .main-balance span.centimes { font-size: 24px; opacity: 0.7; }
+
+        /* --- CARROUSEL DE CARTES --- */
+        .accounts-carousel {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 14px;
+            scroll-snap-type: x mandatory;
+            margin-bottom: 14px;
+        }
+        .accounts-carousel::-webkit-scrollbar { display: none; }
+
+        .bank-card {
+            min-width: 275px;
+            height: 155px;
+            border-radius: 24px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            scroll-snap-align: start;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .bank-card.active {
+            transform: scale(1.02);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.35);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .card-1-design { background: linear-gradient(135deg, #0984e3 0%, #2f3542 100%); color: white; }
+        .card-2-design { background: linear-gradient(135deg, #2c3a47 0%, #130f40 100%); color: white; }
+        .card-3-design { background: linear-gradient(135deg, #b33939 0%, #218c74 100%); color: white; }
+
+        .card-top { display: flex; justify-content: space-between; align-items: center; }
+        .card-name-tag { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        
+        .card-meta-right { display: flex; align-items: center; gap: 8px; }
+        .card-chip { width: 30px; height: 22px; background: linear-gradient(135deg, #fed330, #f7b731); border-radius: 5px; }
+        .card-visibility-toggle {
+            background: rgba(255, 255, 255, 0.15); border: none; width: 28px; height: 28px; 
+            border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        .card-middle-balance { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+        
+        .card-bottom-details { display: flex; justify-content: space-between; align-items: flex-end; }
+        .card-bottom-num { font-size: 13px; font-family: monospace; opacity: 0.9; letter-spacing: 1.5px; }
+        .card-extra-info { font-size: 10px; font-family: monospace; opacity: 0.7; text-align: right; line-height: 1.2; }
+
+        /* --- ESPACE HISTORIQUE --- */
+        .scrollable-area { flex: 1; overflow-y: auto; margin-bottom: 8px; padding-right: 2px; }
+        .scrollable-area::-webkit-scrollbar { display: none; }
+        .section-title { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+
+        .history-item {
+            background: var(--bg-card-blank);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .item-left { display: flex; align-items: center; gap: 12px; }
+        .item-icon-box {
+            width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+        
+        .icon-hotel { background: rgba(52, 152, 219, 0.15); color: #3498db; }
+        .icon-food { background: rgba(230, 126, 34, 0.15); color: #e67e22; }
+        .icon-transport { background: rgba(155, 89, 182, 0.15); color: #9b59b6; }
+        .icon-entertainment { background: rgba(231, 76, 60, 0.15); color: #e74c3c; }
+        .icon-income { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+        .icon-generic-out { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
+
+        .item-title { font-weight: 700; font-size: 14px; color: var(--text-main); }
+        .item-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .item-right-amount { font-weight: 700; font-size: 14px; }
+
+        /* --- FENÊTRES DE NAVIGATION COULISSANTES --- */
+        .sliding-panel {
+            position: absolute; bottom: -100%; left: 0; right: 0; height: 82%;
+            background: var(--bg-shell); border-top-left-radius: 36px; border-top-right-radius: 36px;
+            border-top: 1px solid var(--border-color); padding: 24px 20px; z-index: 100;
+            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; gap: 14px;
+            box-shadow: 0 -15px 40px rgba(0,0,0,0.4);
+        }
+        .sliding-panel.open { bottom: 0; }
+        .panel-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .panel-top h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+        .panel-close { background: none; border: none; color: var(--text-muted); cursor: pointer; }
+
+        .form-container { display: flex; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto; }
+        .form-container::-webkit-scrollbar { display: none; }
+        .field-group { display: flex; flex-direction: column; gap: 4px; }
+        .field-group label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .field-group input, .field-group select {
+            background: var(--input-bg); border: 1px solid var(--border-color); padding: 13px;
+            border-radius: 14px; color: var(--text-main); font-size: 14px; outline: none; width: 100%;
+        }
+
+        .row-fields { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+
+        .btn-submit-action {
+            background: var(--text-main); color: var(--bg-body); font-weight: 700; border: none;
+            padding: 16px; border-radius: 16px; font-size: 15px; cursor: pointer; text-align: center;
+            margin-top: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* --- ANIMATION DE CHARGEMENT DU VIREMENT --- */
+        .processing-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(6, 7, 10, 0.95); z-index: 2000;
+            display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+        }
+        .spinner {
+            width: 42px; height: 42px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%; border-top-color: var(--text-main);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader-text { font-size: 14px; font-weight: 600; color: var(--text-muted); letter-spacing: -0.2px; }
+
+        /* --- NOTIFICATION FULL SCREEN --- */
+        .fullscreen-success {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 2500;
+            display: none; flex-direction: column; justify-content: space-between;
+            padding: 40px 24px; text-align: center;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .success-badge-container { margin-top: 40px; display: flex; flex-direction: column; align-items: center; }
+        .success-circle {
+            width: 76px; height: 76px; border-radius: 50%;
+            background: rgba(46, 204, 113, 0.12); color: #2ecc71;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 24px; scale: 0; animation: popCircle 0.4s 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popCircle { to { scale: 1; } }
+
+        .success-amount { font-size: 38px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+        .success-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 30px; }
+
+        .receipt-card {
+            background: var(--bg-card-blank); border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 20px; text-align: left; display: flex; flex-direction: column; gap: 14px;
+        }
+        .receipt-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .receipt-label { color: var(--text-muted); font-weight: 600; }
+        .receipt-value { color: var(--text-main); font-weight: 700; text-align: right; }
+
+        /* --- BARRE DE NAVIGATION COMMUNE --- */
+        .footer-navigation {
+            background-color: var(--nav-bg); backdrop-filter: blur(20px); border-radius: 26px;
+            padding: 6px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-tab-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 700; gap: 5px;
+            padding: 6px 0; cursor: pointer;
+        }
+
+        .nav-icon-circle {
+            width: 44px; height: 44px; border-radius: 15px; background-color: var(--input-bg);
+            display: flex; align-items: center; justify-content: center; color: var(--text-main);
+            transition: all 0.25s ease; border: 1px solid var(--border-color);
+        }
+
+        .nav-tab-item.active { color: var(--text-main); }
+        .nav-tab-item.active .nav-icon-circle {
+            background-color: var(--text-main); color: var(--bg-body);
+            box-shadow: 0 4px 15px rgba(255,255,255,0.2); border-color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-shell">
+        
+        <!-- BANNIÈRE DE NOTIFICATION PUSH NATIVE SIMULÉE -->
+        <div class="push-notification" id="pushNotificationBanner">
+            <div class="push-icon-box">
+                <i data-lucide="wallet" style="width: 20px; height: 20px;"></i>
+            </div>
+            <div class="push-content">
+                <div class="push-header">
+                    <span>Trustee Wallet</span>
+                    <span>À l'instant</span>
+                </div>
+                <div class="push-title" id="push-title-text">Débit confirmé</div>
+                <div class="push-desc" id="push-desc-text">Virement envoyé avec succès.</div>
+            </div>
+        </div>
+        
+        <!-- ÉCRAN D'ANIMATION CHARGEMENT VIREMENT -->
+        <div class="processing-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <div class="loader-text" id="loadingText">Vérification de la transaction...</div>
+        </div>
+
+        <!-- NOTIFICATION PLEIN ÉCRAN (REÇU FINAL) -->
+        <div class="fullscreen-success" id="fullscreenSuccess">
+            <div class="success-badge-container">
+                <div class="success-circle">
+                    <i data-lucide="check" style="width: 38px; height: 38px; stroke-width: 3;"></i>
+                </div>
+                <div class="success-amount" id="rec-amount">-0.00 €</div>
+                <div class="success-title">Virement envoyé avec succès</div>
+            </div>
+
+            <div class="receipt-card">
+                <div class="receipt-row">
+                    <span class="receipt-label">Destinataire</span>
+                    <span class="receipt-value" id="rec-name">Paul Martin</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Banque / IBAN</span>
+                    <span class="receipt-value" id="rec-iban">FR76 3004 ...</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Type de transfert</span>
+                    <span class="receipt-value" style="color: var(--accent-green)">Instant SEPA Pro</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Référence</span>
+                    <span class="receipt-value" style="font-family: monospace;">TX-99824A1</span>
+                </div>
+            </div>
+
+            <button class="btn-submit-action" style="margin-top: 40px;" onclick="closeSuccessScreen()">Terminé</button>
+        </div>
+
+        <!-- ZONE SUPÉRIEURE : PROFIL ET SÉLECTEUR DE COMPTES -->
+        <div>
+            <div class="header">
+                <div class="profile">
+                    <div class="avatar">DF</div>
+                    <div>
+                        <span class="username">Damian François</span>
+                        <div class="user-tag"><i data-lucide="shield-check" style="width:12px; height:12px; color:#2ecc71;"></i> Membre Premium</div>
+                    </div>
+                </div>
+                <button class="theme-toggle-btn" onclick="toggleInterfaceTheme()">
+                    <i data-lucide="sun" id="theme-icon" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+
+            <!-- Solde Dynamique -->
+            <div class="balance-container">
+                <div class="balance-label" id="active-card-label">Trustee Card</div>
+                <div class="main-balance">
+                    <span id="display-integer">42 500</span><span class="centimes">.45</span> €
+                </div>
+            </div>
+
+            <!-- SÉLECTEUR DE COMPTES -->
+            <div class="section-title">Mes Comptes & Cartes</div>
+            <div class="accounts-carousel">
+                <!-- Carte 1 -->
+                <div class="bank-card card-1-design active" id="card-node-0" onclick="selectActiveAccount(0)">
+                    <div class="card-top">
+                        <span class="card-name-tag">Trustee Premium</span>
+                        <div class="card-meta-right">
+                            <button class="card-visibility-toggle" onclick="toggleCardPrivacy(0, event)">
+                                <i data-lucide="eye" id="eye-icon-0" style="width:14px; height:14px;"></i>
+                            </button>
+                            <div class="card-chip"></div>
+                        </div>
+                    </div>
+                    <div class="card-middle-balance">42 500.45 €</div>
+                    <div class="card-bottom-details">
+                        <div class="card-bottom-num" id="card-num-0">•••• •••• •••• 7777</div>
+                        <div class="card-extra-info" id="card-meta-0">EXP: ••/••<br>CVV: •••</div>
+                    </div>
+                </div>
+                <!-- Carte 2 -->
+                <div class="bank-card card-2-design" id="card-node-1" onclick="selectActiveAccount(1)">
+                    <div class="card-top">
+                        <span class="card-name-tag">Crypto Vault Card</span>
+                        <div class="card-meta-right">
+                            <button class="card-visibility-toggle" onclick="toggleCardPrivacy(1, event)">
+                                <i data-lucide="eye" id="eye-icon-1" style="width:14px; height:14px;"></i>
+                            </button>
+                            <div class="card-chip"></div>
+                        </div>
+                    </div>
+                    <div class="card-middle-balance">14 950.00 €</div>
+                    <div class="card-bottom-details">
+                        <div class="card-bottom-num" id="card-num-1">•••• •••• •••• 5521</div>
+                        <div class="card-extra-info" id="card-meta-1">EXP: ••/••<br>CVV: •••</div>
+                    </div>
+                </div>
+                <!-- Carte 3 -->
+                <div class="bank-card card-3-design" id="card-node-2" onclick="selectActiveAccount(2)">
+                    <div class="card-top">
+                        <span class="card-name-tag">Business Gold Corporate</span>
+                        <div class="card-meta-right">
+                            <button class="card-visibility-toggle" onclick="toggleCardPrivacy(2, event)">
+                                <i data-lucide="eye" id="eye-icon-2" style="width:14px; height:14px;"></i>
+                            </button>
+                            <div class="card-chip"></div>
+                        </div>
+                    </div>
+                    <div class="card-middle-balance">185 000.00 €</div>
+                    <div class="card-bottom-details">
+                        <div class="card-bottom-num" id="card-num-2">•••• •••• •••• 0009</div>
+                        <div class="card-extra-info" id="card-meta-2">EXP: ••/••<br>CVV: •••</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE DE L'HISTORIQUE COMMUNE -->
+        <div class="scrollable-area">
+            <div class="section-title" id="history-section-title">Activité récente</div>
+            <div id="history-injector-zone"></div>
+        </div>
+
+        <!-- FORMULAIRE DE VIREMENT -->
+        <div class="sliding-panel" id="panel-Transfer">
+            <div class="panel-top">
+                <h3>Virement sécurisé</h3>
+                <button class="panel-close" onclick="closeAllPanels()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="form-container">
+                <div class="field-group">
+                    <label>Bénéficiaire</label>
+                    <input type="text" placeholder="Ex: M. Paul Martin" id="form-tx-name">
+                </div>
+                <div class="field-group">
+                    <label>IBAN du destinataire</label>
+                    <input type="text" placeholder="FR76 3004 6000 ..." id="form-tx-iban">
+                </div>
+                <div class="field-group">
+                    <label>Montant (€)</label>
+                    <input type="number" placeholder="0.00" id="form-tx-amount">
+                </div>
+                
+                <div style="border-top: 1px dashed var(--border-color); margin: 6px 0;"></div>
+                <p style="font-size:11px; color:var(--text-muted); font-weight:600;">AUTHENTIFICATION DE LA CARTE SOURCE</p>
+
+                <div class="field-group">
+                    <label>Saisir le numéro complet de votre carte</label>
+                    <input type="text" placeholder="4532 7777 ...." maxlength="19" id="form-tx-cardnum">
+                </div>
+                <div class="row-fields">
+                    <div class="field-group">
+                        <label>Date d'expiration</label>
+                        <input type="text" placeholder="MM/AA" maxlength="5">
+                    </div>
+                    <div class="field-group">
+                        <label>Code CVV</label>
+                        <input type="password" placeholder="•••" maxlength="3" id="form-tx-cvv">
+                    </div>
+                </div>
+
+                <button class="btn-submit-action" onclick="processSecureVirement()">Signer & Envoyer</button>
+            </div>
+        </div>
+
+        <!-- PANNEAU CRÉDITER -->
+        <div class="sliding-panel" id="panel-Credit">
+            <div class="panel-top">
+                <h3>Alimenter le compte</h3>
+                <button class="panel-close" onclick="closeAllPanels()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="form-container">
+                <div class="field-group"><label>Montant à ajouter (€)</label><input type="number" placeholder="0.00" id="form-credit-val"></div>
+                <button class="btn-submit-action" onclick="processCredit()">Confirmer le chargement</button>
+            </div>
+        </div>
+
+        <!-- PANNEAU SWAP -->
+        <div class="sliding-panel" id="panel-Swap">
+            <div class="panel-top">
+                <h3>Marchés & Arbitrage</h3>
+                <button class="panel-close" onclick="closeAllPanels()"><i data-lucide="x"></i></button>
+            </div>
+            <div class="form-container">
+                <div class="field-group"><label>Convertir en</label><select><option>Bitcoin (BTC)</option><option>Ethereum (ETH)</option></select></div>
+                <div class="field-group"><label>Montant en Euros (€)</label><input type="number" placeholder="0.00"></div>
+                <button class="btn-submit-action" onclick="alert('Ordre de marché transmis.'); closeAllPanels();">Exécuter</button>
+            </div>
+        </div>
+
+        <!-- BARRE DE NAVIGATION APPLICATIVE -->
+        <div>
+            <div class="footer-navigation">
+                <div class="nav-tab-item" onclick="openTargetPanel('Credit', this)">
+                    <div class="nav-icon-circle"><i data-lucide="plus-circle" style="width: 20px; height: 20px;"></i></div>Déposer
+                </div>
+                <div class="nav-tab-item" onclick="openTargetPanel('Swap', this)">
+                    <div class="nav-icon-circle"><i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i></div>Échanger
+                </div>
+                <div class="nav-tab-item" id="tab-home-node" onclick="goHome()">
+                    <div class="nav-icon-circle"><i data-lucide="smart-phone" style="width: 18px; height: 18px;"></i></div>Accueil
+                </div>
+                <div class="nav-tab-item" id="tab-virement-node" onclick="openTargetPanel('Transfer', this)">
+                    <div class="nav-icon-circle"><i data-lucide="send" style="width: 19px; height: 19px;"></i></div>Virement
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CODE DE LOGIQUE INTERACTIF -->
+    <script>
+        lucide.createIcons();
+
+        let userAccounts = [
+            {
+                label: "Trustee Premium Card", amount: 42500.45, fullNumber: "4532 8120 4490 7777", expiry: "09/29", cvv: "415", isPrivate: true,
+                history: [
+                    { title: "Radisson Blu Hotel", date: "06 Juillet • Lyon", amount: "-340.00 €", isIncome: false, icon: "hotel", cssClass: "icon-hotel" },
+                    { title: "Netflix Subscription", date: "02 Juillet • En ligne", amount: "-19.99 €", isIncome: false, icon: "tv", cssClass: "icon-entertainment" },
+                    { title: "Virement Salaire Tech", date: "30 Juin • SEPA Incoming", amount: "+4 350.00 €", isIncome: true, icon: "download", cssClass: "icon-income" },
+                    { title: "Uber Trip", date: "28 Juin • Paris", amount: "-24.50 €", isIncome: false, icon: "car", cssClass: "icon-transport" },
+                    { title: "Bouchon L'Anatole", date: "25 Juin • Lyon", amount: "-85.00 €", isIncome: false, icon: "utensils", cssClass: "icon-food" }
+                ]
+            },
+            {
+                label: "Crypto Vault Account", amount: 14950.00, fullNumber: "5104 9902 1243 5521", expiry: "12/31", cvv: "009", isPrivate: true,
+                history: [
+                    { title: "Binance P2P Funding", date: "07 Juillet • Instant", amount: "+1 500.00 €", isIncome: true, icon: "download", cssClass: "icon-income" },
+                    { title: "McDonald's", date: "05 Juillet • Autoroute A6", amount: "-14.20 €", isIncome: false, icon: "utensils", cssClass: "icon-food" },
+                    { title: "Ledger Store Paris", date: "29 Juin • Électronique", amount: "-159.00 €", isIncome: false, icon: "wallet", cssClass: "icon-generic-out" },
+                    { title: "Remboursement Resto", date: "18 Juin • Lydia", amount: "+45.00 €", isIncome: true, icon: "arrow-down-left", cssClass: "icon-income" }
+                ]
+            },
+            {
+                label: "Business Gold Corporate", amount: 185000.00, fullNumber: "4000 0112 8831 0009", expiry: "04/28", cvv: "781", isPrivate: true,
+                history: [
+                    { title: "Facture #2026-88", date: "08 Juillet • Client Corp", amount: "+14 500.00 €", isIncome: true, icon: "briefcase", cssClass: "icon-income" },
+                    { title: "Hôtel Le Royal Bellecour", date: "05 Juillet • Lyon", amount: "-850.00 €", isIncome: false, icon: "hotel", cssClass: "icon-hotel" },
+                    { title: "Restaurant Paul Bocuse", date: "04 Juillet • Lyon", amount: "-420.00 €", isIncome: false, icon: "utensils", cssClass: "icon-food" },
+                    { title: "TotalEnergies Pro", date: "01 Juillet • Carburant", amount: "-92.10 €", isIncome: false, icon: "car", cssClass: "icon-transport" },
+                    { title: "Abonnement AWS Cloud", date: "28 Juin • Facture Web", amount: "-1 140.00 €", isIncome: false, icon: "server", cssClass: "icon-generic-out" }
+                ]
+            }
+        ];
+
+        let selectedCardIndex = 0;
+
+        function toggleInterfaceTheme() {
+            const bodyNode = document.body;
+            const current = bodyNode.getAttribute('data-theme');
+            const icon = document.getElementById('theme-icon');
+            if (current === 'light') { bodyNode.removeAttribute('data-theme'); icon.setAttribute('data-lucide', 'sun'); }
+            else { bodyNode.setAttribute('data-theme', 'light'); icon.setAttribute('data-lucide', 'moon'); }
+            lucide.createIcons();
+        }
+
+        function triggerPushNotification(title, message) {
+            const banner = document.getElementById('pushNotificationBanner');
+            document.getElementById('push-title-text').innerText = title;
+            document.getElementById('push-desc-text').innerText = message;
+            
+            banner.classList.add('show');
+            setTimeout(() => {
+                banner.classList.remove('show');
+            }, 4000);
+        }
+
+        function toggleCardPrivacy(idx, event) {
+            event.stopPropagation();
+            let acc = userAccounts[idx];
+            acc.isPrivate = !acc.isPrivate;
+            const numNode = document.getElementById(`card-num-${idx}`);
+            const metaNode = document.getElementById(`card-meta-${idx}`);
+            const eyeIcon = document.getElementById(`eye-icon-${idx}`);
+
+            if (acc.isPrivate) {
+                numNode.innerText = `•••• •••• •••• ${acc.fullNumber.slice(-4)}`;
+                metaNode.innerHTML = `EXP: ••/••<br>CVV: •••`;
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            } else {
+                numNode.innerText = acc.fullNumber;
+                metaNode.innerHTML = `EXP: ${acc.expiry}<br>CVV: ${acc.cvv}`;
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            }
+            lucide.createIcons();
+        }
+
+        function renderInterface() {
+            let account = userAccounts[selectedCardIndex];
+            document.getElementById('active-card-label').innerText = account.label;
+            document.getElementById('display-integer').innerText = Math.floor(account.amount).toLocaleString('fr-FR');
+            document.querySelector(`#card-node-${selectedCardIndex} .card-middle-balance`).innerText = account.amount.toLocaleString('fr-FR') + " €";
+
+            const historyContainer = document.getElementById('history-injector-zone');
+            historyContainer.innerHTML = '';
+
+            account.history.forEach(tx => {
+                let amountColor = tx.isIncome ? 'var(--accent-green)' : 'var(--text-main)';
+                let txHtml = `
+                    <div class="history-item">
+                        <div class="item-left">
+                            <div class="item-icon-box ${tx.cssClass}"><i data-lucide="${tx.icon}" style="width:16px; height:16px;"></i></div>
+                            <div>
+                                <div class="item-title">${tx.title}</div>
+                                <div class="item-date">${tx.date}</div>
+                            </div>
+                        </div>
+                        <div class="item-right-amount" style="color: ${amountColor};">${tx.amount}</div>
+                    </div>`;
+                historyContainer.insertAdjacentHTML('beforeend', txHtml);
+            });
+            lucide.createIcons();
+        }
+
+        function selectActiveAccount(idx) {
+            selectedCardIndex = idx;
+            document.querySelectorAll('.bank-card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`card-node-${idx}`).classList.add('active');
+            goHome();
+        }
+
+        function openTargetPanel(id, tabElement) {
+            document.querySelectorAll('.sliding-panel').forEach(p => p.classList.remove('open'));
+            document.querySelectorAll('.nav-tab-item').forEach(t => t.classList.remove('active'));
+            tabElement.classList.add('active');
+            document.getElementById('panel-' + id).classList.add('open');
+        }
+
+        function closeAllPanels() {
+            document.querySelectorAll('.sliding-panel').forEach(p => p.classList.remove('open'));
+            document.querySelectorAll('.nav-tab-item').forEach(t => t.classList.remove('active'));
+        }
+
+        function goHome() {
+            closeAllPanels();
+            document.querySelectorAll('.nav-tab-item').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-home-node').classList.add('active');
+            renderInterface();
+        }
+
+        function processSecureVirement() {
+            const name = document.getElementById('form-tx-name').value;
+            const iban = document.getElementById('form-tx-iban').value;
+            const amount = parseFloat(document.getElementById('form-tx-amount').value);
+            const cardNum = document.getElementById('form-tx-cardnum').value;
+            const cvv = document.getElementById('form-tx-cvv').value;
+
+            if (!name || !iban || !amount || !cardNum || !cvv) {
+                return alert("Erreur de sécurité : Tous les champs doivent être remplis.");
+            }
+            if (amount > userAccounts[selectedCardIndex].amount) {
+                return alert("Solde insuffisant.");
+            }
+
+            const overlay = document.getElementById('loadingOverlay');
+            const loaderText = document.getElementById('loadingText');
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => { loaderText.innerText = "Signature cryptographique..."; }, 800);
+
+            setTimeout(() => {
+                userAccounts[selectedCardIndex].amount -= amount;
+                userAccounts[selectedCardIndex].history.unshift({
+                    title: `Virement à ${name}`,
+                    date: "Aujourd'hui • En ligne",
+                    amount: `-${amount.toLocaleString('fr-FR')} .00 €`,
+                    isIncome: false, icon: "send", cssClass: "icon-generic-out"
+                });
+
+                overlay.style.display = 'none';
+
+                document.getElementById('rec-amount').innerText = `-${amount.toLocaleString('fr-FR')} .00 €`;
+                document.getElementById('rec-name').innerText = name;
+                document.getElementById('rec-iban').innerText = iban.toUpperCase().substring(0, 14) + "...";
+                
+                document.getElementById('fullscreenSuccess').style.display = 'flex';
+
+                // Lancement de la fausse notification push native en arrière-plan
+                triggerPushNotification("Compte débité", `Virement de ${amount.toLocaleString('fr-FR')} € envoyé à ${name}.`);
+
+                document.getElementById('form-tx-name').value = '';
+                document.getElementById('form-tx-iban').value = '';
+                document.getElementById('form-tx-amount').value = '';
+                document.getElementById('form-tx-cardnum').value = '';
+                document.getElementById('form-tx-cvv').value = '';
+            }, 2000);
+        }
+
+        function closeSuccessScreen() {
+            document.getElementById('fullscreenSuccess').style.display = 'none';
+            goHome();
+        }
+
+        function processCredit() {
+            const val = parseFloat(document.getElementById('form-credit-val').value);
+            if (!val || val <= 0) return alert("Montant invalide.");
+            userAccounts[selectedCardIndex].amount += val;
+            userAccounts[selectedCardIndex].history.unshift({
+                title: "Rechargement App", date: "En direct", amount: `+${val.toLocaleString('fr-FR')} .00 €`, isIncome: true, icon: "plus", cssClass: "icon-income"
+            });
+            goHome();
+            triggerPushNotification("Compte crédité", `Votre compte a été rechargé de +${val.toLocaleString('fr-FR')} €.`);
+            document.getElementById('form-credit-val').value = '';
+        }
+
+        // Chargement initial de l'état "Accueil"
+        goHome();
+    </script>
+</body>
+</html>
