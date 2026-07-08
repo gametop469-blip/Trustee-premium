@@ -2,8 +2,13 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trustee Wallet - Premium Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Trustee Wallet</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trustee Pro">
+    
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* --- SYSTÈME DE VARIABLES D'INTERFACE (THEMING) --- */
@@ -52,21 +57,20 @@
             align-items: center;
             min-height: 100vh;
             color: var(--text-main);
-            padding: 10px;
+            padding: 0;
         }
 
-        /* Boîtier Téléphone (Format iPhone X exact) */
+        /* Boîtier Adapté au mode Application Plein Écran de l'iPhone X */
         .phone-shell {
-            width: 385px;
-            height: 835px;
+            width: 100vw;
+            height: 100vh;
+            max-width: 385px;
+            max-height: 835px;
             background: var(--bg-shell);
-            border-radius: 44px;
-            padding: 26px 20px;
+            padding: 40px 20px 26px 20px; /* Padding haut augmenté pour l'encoche de l'iPhone X */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 30px 70px var(--shadow), inset 0 1px 2px rgba(255, 255, 255, 0.1);
-            border: 7px solid #282c3d;
             position: relative;
             overflow: hidden;
         }
@@ -91,7 +95,7 @@
             transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .push-notification.show {
-            top: 20px;
+            top: 44px; /* Ajusté pour descendre juste en dessous de l'encoche */
         }
         .push-icon-box {
             width: 38px;
@@ -364,7 +368,6 @@
 
     <div class="phone-shell">
         
-        <!-- BANNIÈRE DE NOTIFICATION PUSH NATIVE SIMULÉE -->
         <div class="push-notification" id="pushNotificationBanner">
             <div class="push-icon-box">
                 <i data-lucide="wallet" style="width: 20px; height: 20px;"></i>
@@ -379,13 +382,11 @@
             </div>
         </div>
         
-        <!-- ÉCRAN D'ANIMATION CHARGEMENT VIREMENT -->
         <div class="processing-overlay" id="loadingOverlay">
             <div class="spinner"></div>
             <div class="loader-text" id="loadingText">Vérification de la transaction...</div>
         </div>
 
-        <!-- NOTIFICATION PLEIN ÉCRAN (REÇU FINAL) -->
         <div class="fullscreen-success" id="fullscreenSuccess">
             <div class="success-badge-container">
                 <div class="success-circle">
@@ -417,7 +418,6 @@
             <button class="btn-submit-action" style="margin-top: 40px;" onclick="closeSuccessScreen()">Terminé</button>
         </div>
 
-        <!-- ZONE SUPÉRIEURE : PROFIL ET SÉLECTEUR DE COMPTES -->
         <div>
             <div class="header">
                 <div class="profile">
@@ -432,7 +432,6 @@
                 </button>
             </div>
 
-            <!-- Solde Dynamique -->
             <div class="balance-container">
                 <div class="balance-label" id="active-card-label">Trustee Card</div>
                 <div class="main-balance">
@@ -440,10 +439,8 @@
                 </div>
             </div>
 
-            <!-- SÉLECTEUR DE COMPTES -->
             <div class="section-title">Mes Comptes & Cartes</div>
             <div class="accounts-carousel">
-                <!-- Carte 1 -->
                 <div class="bank-card card-1-design active" id="card-node-0" onclick="selectActiveAccount(0)">
                     <div class="card-top">
                         <span class="card-name-tag">Trustee Premium</span>
@@ -460,7 +457,6 @@
                         <div class="card-extra-info" id="card-meta-0">EXP: ••/••<br>CVV: •••</div>
                     </div>
                 </div>
-                <!-- Carte 2 -->
                 <div class="bank-card card-2-design" id="card-node-1" onclick="selectActiveAccount(1)">
                     <div class="card-top">
                         <span class="card-name-tag">Crypto Vault Card</span>
@@ -477,7 +473,6 @@
                         <div class="card-extra-info" id="card-meta-1">EXP: ••/••<br>CVV: •••</div>
                     </div>
                 </div>
-                <!-- Carte 3 -->
                 <div class="bank-card card-3-design" id="card-node-2" onclick="selectActiveAccount(2)">
                     <div class="card-top">
                         <span class="card-name-tag">Business Gold Corporate</span>
@@ -497,13 +492,11 @@
             </div>
         </div>
 
-        <!-- ZONE DE L'HISTORIQUE COMMUNE -->
         <div class="scrollable-area">
             <div class="section-title" id="history-section-title">Activité récente</div>
             <div id="history-injector-zone"></div>
         </div>
 
-        <!-- FORMULAIRE DE VIREMENT -->
         <div class="sliding-panel" id="panel-Transfer">
             <div class="panel-top">
                 <h3>Virement sécurisé</h3>
@@ -545,7 +538,6 @@
             </div>
         </div>
 
-        <!-- PANNEAU CRÉDITER -->
         <div class="sliding-panel" id="panel-Credit">
             <div class="panel-top">
                 <h3>Alimenter le compte</h3>
@@ -557,7 +549,6 @@
             </div>
         </div>
 
-        <!-- PANNEAU SWAP -->
         <div class="sliding-panel" id="panel-Swap">
             <div class="panel-top">
                 <h3>Marchés & Arbitrage</h3>
@@ -570,7 +561,6 @@
             </div>
         </div>
 
-        <!-- BARRE DE NAVIGATION APPLICATIVE -->
         <div>
             <div class="footer-navigation">
                 <div class="nav-tab-item" onclick="openTargetPanel('Credit', this)">
@@ -590,7 +580,6 @@
 
     </div>
 
-    <!-- CODE DE LOGIQUE INTERACTIF -->
     <script>
         lucide.createIcons();
 
